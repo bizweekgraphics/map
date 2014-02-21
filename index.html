@@ -65,7 +65,7 @@ clipPath.append("circle")
   .attr("r",100);
 
 var mapGroup = svg.append("g")
-  .attr("clip-path", "url(#map-frame)")
+  //.attr("clip-path", "url(#map-frame)")
   .attr("id", "map-group");
 
 d3.json("uk.json", function(error, uk) {
