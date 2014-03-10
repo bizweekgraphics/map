@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.land {
+  fill: #222;
+}
+
+.county-boundary {
+  fill: none;
+  stroke: #fff;
+  stroke-width: .5px;
+}
+
+.state-boundary {
+  fill: none;
+  stroke: #fff;
+}
+
+.oil {
+  fill: magenta;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var projection = d3.geo.albers()
+    .center([-0.6, 38.7])
+    .rotate([96, 0])
+    .parallels([29.5,45.5])
+    .scale(1000)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("us-states.json", function(error, us) {
+  console.log("us:");
+  console.log(us);
+  svg.insert("path", ".graticule")
+      .datum(topojson.feature(us, us.objects.land))
+      .attr("class", "land")
+      .attr("d", path);
+
+  svg.insert("path", ".graticule")
+      .datum(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b && !(a.id / 1000 ^ b.id / 1000); }))
+      .attr("class", "county-boundary")
+      .attr("d", path);
+
+  svg.insert("path", ".graticule")
+      .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+      .attr("class", "state-boundary")
+      .attr("d", path);
+});
+
+d3.json("oilspill.geojson", function(error, oil) {
+  console.log("oil:");
+  console.log(oil);
+
+  svg.selectAll("circle").data(oil.features).enter().append("circle")
+    .attr("cx", function(d) {
+        if(!d.geometry) return 0;
+        return projection(d.geometry.coordinates)[0];
+      })
+    .attr("cy", function(d) {
+        if(!d.geometry) return 0;
+        return projection(d.geometry.coordinates)[1];
+      })
+    .attr("r", function(d) {
+        if(!d.properties) return 1;
+        return (d.properties["incident_spill_total"]/10000);
+      })
+    .attr("opacity", "0.1");
+
+});
+
+d3.select(self.frameElement).style("height", height + "px");
+
+</script>
